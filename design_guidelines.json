@@ -1,0 +1,237 @@
+{
+  "app_name": "TruckTrust",
+  "personality": "1 iOS-Native Clean",
+  "personality_one_liner": "A trustworthy, highly functional logistics tool that strips away noise to focus on operational clarity and reliable matching.",
+  "color": {
+    "light": {
+      "surface": "#FFFFFF",
+      "onSurface": "#111827",
+      "surfaceSecondary": "#F3F4F6",
+      "onSurfaceSecondary": "#374151",
+      "surfaceTertiary": "#E5E7EB",
+      "onSurfaceTertiary": "#4B5563",
+      "surfaceInverse": "#111827",
+      "onSurfaceInverse": "#FFFFFF",
+      "brand": "#B23A22",
+      "brandPrimary": "#C0392B",
+      "onBrandPrimary": "#FFFFFF",
+      "brandSecondary": "#E65100",
+      "onBrandSecondary": "#FFFFFF",
+      "brandTertiary": "#FDE8E4",
+      "onBrandTertiary": "#C0392B",
+      "success": "#059669",
+      "onSuccess": "#FFFFFF",
+      "warning": "#D97706",
+      "onWarning": "#FFFFFF",
+      "error": "#DC2626",
+      "onError": "#FFFFFF",
+      "info": "#475569",
+      "onInfo": "#FFFFFF",
+      "border": "#E5E7EB",
+      "borderStrong": "#D1D5DB",
+      "divider": "#F3F4F6",
+      "muted": "#6B7280",
+      "onBrand": "#FFFFFF"
+    },
+    "dark": {
+      "surface": "#111827",
+      "onSurface": "#F9FAFB",
+      "surfaceSecondary": "#1F2937",
+      "onSurfaceSecondary": "#D1D5DB",
+      "surfaceTertiary": "#374151",
+      "onSurfaceTertiary": "#9CA3AF",
+      "surfaceInverse": "#F9FAFB",
+      "onSurfaceInverse": "#111827",
+      "brand": "#B23A22",
+      "brandPrimary": "#E04A32",
+      "onBrandPrimary": "#FFFFFF",
+      "brandSecondary": "#FF8C53",
+      "onBrandSecondary": "#111827",
+      "brandTertiary": "#3F1A13",
+      "onBrandTertiary": "#FDE8E4",
+      "success": "#10B981",
+      "onSuccess": "#064E3B",
+      "warning": "#F59E0B",
+      "onWarning": "#78350F",
+      "error": "#EF4444",
+      "onError": "#7F1D1D",
+      "info": "#94A3B8",
+      "onInfo": "#0F172A",
+      "border": "#374151",
+      "borderStrong": "#4B5563",
+      "divider": "#1F2937",
+      "muted": "#9CA3AF",
+      "onBrand": "#FFFFFF"
+    }
+  },
+  "typography": {
+    "displayFontFamily": "Space Grotesk",
+    "textFontFamily": "Geist",
+    "scale": {
+      "sm": 12,
+      "base": 14,
+      "lg": 16,
+      "xl": 20,
+      "2xl": 24
+    }
+  },
+  "spacing": {
+    "rule": "Generous vertical breathing room for reading clarity. Strict 12pt (md) gap between cards in lists. Do not use random margins.",
+    "xs": 4,
+    "sm": 8,
+    "md": 12,
+    "lg": 16,
+    "xl": 24,
+    "2xl": 32,
+    "3xl": 48
+  },
+  "radius_tokens": {
+    "sm": 6,
+    "md": 12,
+    "lg": 20,
+    "pill": 999
+  },
+  "shadow_tier": 1,
+  "navigation": "bottom_tabs",
+  "icon_set": "Phosphor",
+  "glassmorphism": {
+    "enabled": true,
+    "do's": [
+      "Bottom tab bar background",
+      "Sticky headers when scrolling through loads",
+      "Floating Post Load FAB (brandTertiary tint over surfaceSecondary)",
+      "Bottom-sheet drag handles for offers"
+    ],
+    "dont's": [
+      "Data-heavy load cards",
+      "Form inputs",
+      "Status trackers"
+    ]
+  },
+  "platform_libraries": {
+    "glass": {
+      "ios": "expo-glass-effect",
+      "android": "expo-blur",
+      "low_end_android_fallback": "solid surfaceSecondary"
+    },
+    "image": "expo-image",
+    "blur": "expo-blur",
+    "bottom_sheet": "@gorhom/bottom-sheet",
+    "animation": "react-native-reanimated",
+    "gesture": "react-native-gesture-handler"
+  },
+  "screens": [
+    {
+      "name": "Auth (Login & Role Selection)",
+      "purpose": "Secure entry and clear segmentation of Shippers vs Drivers.",
+      "states": {
+        "loading": "Centered brand spinner",
+        "empty": "N/A",
+        "error": "Inline text below inputs or standard alert."
+      },
+      "layout": "Top-aligned logo or Hero background image with vertical gradient scrim. Segmented control for 'Shipper' vs 'Driver' selection. Email/Password inputs below. Sticky login CTA at bottom inside KeyboardAvoidingView."
+    },
+    {
+      "name": "Shipper Home (My Loads)",
+      "purpose": "Dashboard for shippers to monitor active shipments and post new ones.",
+      "states": {
+        "loading": "Skeleton cards mimicking load dimensions.",
+        "empty": "Illustration of warehouse with 'No active loads. Post a load to get started.' + Primary 'Post Load' CTA.",
+        "error": "Error loading shipments, Retry button."
+      },
+      "layout": "Organize loads by pickup date/status (Active, Pending). Single-column scrollable list of load cards. Each card displays Origin -> Dest (large text), Date, Weight, and Truck Type. Floating Action Button (FAB) anchored bottom right with glass effect for 'Post Load'."
+    },
+    {
+      "name": "Driver Home (Available Loads)",
+      "purpose": "Feed of available return loads for drivers to bid on.",
+      "states": {
+        "loading": "Skeleton rows.",
+        "empty": "Illustration of empty trailer with 'No return loads matching your route.'",
+        "error": "Error loading matches, Retry button."
+      },
+      "layout": "Sticky glass header with horizontal scrollable filter chips (Truck Type, Origin, Destination, Date). List of Load cards displaying Origin -> Dest, Price/Offer indicator, and Distance. 'My Trips' accessible via bottom tab."
+    },
+    {
+      "name": "Post Load Form (Shipper)",
+      "purpose": "Comprehensive form for shippers to post freight requirements.",
+      "states": {
+        "loading": "Submitting overlay with spinner.",
+        "empty": "N/A",
+        "error": "Form validation errors highlighted in error color."
+      },
+      "layout": "Single column scrollable form. Labels above inputs. Fields: Pickup, Drop, Date, Weight, Material, Truck Type, Expected Price. Primary 'Post Load' CTA sticky at bottom with safe-area clearance."
+    },
+    {
+      "name": "Load Details & Offers (Shipper/Driver)",
+      "purpose": "View full load specifications and manage incoming/outgoing bids.",
+      "states": {
+        "loading": "Skeleton layout.",
+        "empty": "Shipper view: 'No offers yet.' Driver view: N/A",
+        "error": "Failed to load details, Retry button."
+      },
+      "layout": "Top section: High-contrast summary (Route, Date, Specs). Middle section: List of offers received/made. Instant bid responses preferred. Bottom: Sticky CTA to 'Accept Offer', 'Counter Offer', or 'Make Offer'."
+    },
+    {
+      "name": "Negotiation Chat",
+      "purpose": "Direct communication for counter-offers and terms.",
+      "states": {
+        "loading": "Loading history.",
+        "empty": "Start the conversation.",
+        "error": "Failed to send message."
+      },
+      "layout": "Standard chat interface. Timestamped bubbles. Integrated 'System' bubbles for formal counter-offer submissions. Input field sticky at bottom above keyboard."
+    },
+    {
+      "name": "Trip Tracking & OTP (My Trips)",
+      "purpose": "Track live status of booked shipments and verify via OTP.",
+      "states": {
+        "loading": "Skeleton tracker.",
+        "empty": "No active trips.",
+        "error": "Failed to load status."
+      },
+      "layout": "Prominent Vertical Status Stepper: Picked Up -> In Transit -> Delivered. Current step pulses (::after animation equivalent in RN). OTP input block visible when approaching pickup or delivery for verification. Load details summarized below."
+    },
+    {
+      "name": "Admin Dashboard",
+      "purpose": "High-level moderation of users, loads, and disputes.",
+      "states": {
+        "loading": "Loading metrics.",
+        "empty": "No items require attention.",
+        "error": "Failed to load admin data."
+      },
+      "layout": "Utility-first grid. High-level metric cards (Total Users, Active Loads) at top. List views for Disputes and Verifications. Clear data density."
+    }
+  ],
+  "images": {
+    "hero_background": {
+      "url": "https://images.unsplash.com/photo-1655478157959-3fcfc543c1a2?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA4Mzl8MHwxfHNlYXJjaHwxfHx0cnVjayUyMG9uJTIwaGlnaHdheSUyMHN1bnNldHxlbnwwfHx8fDE3OTA4NDcyMTR8MA&ixlib=rb-4.1.0&q=85",
+      "dark": "https://images.unsplash.com/photo-1655478157959-3fcfc543c1a2?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA4Mzl8MHwxfHNlYXJjaHwxfHx0cnVjayUyMG9uJTIwaGlnaHdheSUyMHN1bnNldHxlbnwwfHx8fDE3OTA4NDcyMTR8MA&ixlib=rb-4.1.0&q=85",
+      "alt": "Sunset over a highway with a truck, reflecting a warm orange tone."
+    },
+    "shipper_empty_state": {
+      "url": "https://images.unsplash.com/photo-1587293852726-70cdb56c2866?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NDk1Nzd8MHwxfHNlYXJjaHwxfHx3YXJlaG91c2UlMjBsb2dpc3RpY3MlMjBzdXBwbHklMjBjaGFpbnxlbnwwfHx8fDE3OTA4NDcyMTR8MA&ixlib=rb-4.1.0&q=85",
+      "alt": "Cardboard boxes on a white metal rack in a warehouse."
+    },
+    "driver_empty_state": {
+      "url": "https://images.unsplash.com/photo-1756888218644-aeb9c044e1df?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1NzR8MHwxfHNlYXJjaHwyfHxlbXB0eSUyMHRydWNrJTIwdHJhaWxlciUyMGNhcmdvfGVufDB8fHx8MTc5MDg0NzIxNHww&ixlib=rb-4.1.0&q=85",
+      "alt": "A long, flatbed empty truck trailer."
+    }
+  },
+  "haptics": {
+    "post_load_submit": "success",
+    "offer_accepted": "success",
+    "filter_chip_toggle": "light",
+    "tab_switch": "selection",
+    "stepper_status_update": "medium"
+  },
+  "instructions_to_main_agent": [
+    "Strictly adhere to the 1 iOS-Native Clean personality. The app should feel like a highly functional B2B utility.",
+    "Do not use ANY blue hues (indigo, violet, sky, navy, royal). Only use the specified brick red (#B23A22) and sunrise orange (#E65100) alongside neutrals (gray/slate).",
+    "Ensure the sticky CTAs ('Post Load', 'Make Offer', etc.) are anchored outside scroll views, with appropriate safe-area padding at the bottom.",
+    "Use 'Plus Jakarta Sans' or 'Space Grotesk' for display numbers (prices, weights, dates) to give a sharp, readable data-heavy feel, while using 'Geist' for body text.",
+    "Implement a prominent vertical stepper for Trip Tracking. Ensure the active step pulses.",
+    "When placing text over the hero image (Auth screen), apply a vertical gradient scrim (transparent to surfaceInverse) to guarantee WCAG contrast.",
+    "Mock all payments as requested in the MVP. For statuses, stick exactly to 'Picked up / In transit / Delivered' with no live map integration.",
+    "For Load Cards, organize by Origin -> Dest prominently, keeping auxiliary data (Weight, Date, Truck Type) clearly aligned in a functional grid."
+  ]
+}
