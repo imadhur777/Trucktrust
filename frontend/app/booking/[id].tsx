@@ -77,8 +77,8 @@ export default function BookingDetails() {
   };
 
   const verify = async (stage: "pickup" | "delivery") => {
-    if (otp.length < 4) {
-      toast("Enter the 4-digit OTP", "error");
+    if (otp.length < 6) {
+      toast("Enter the 6-digit OTP", "error");
       return;
     }
     setBusy(true);
@@ -202,13 +202,13 @@ export default function BookingDetails() {
                 {!b.pickup_verified ? (
                   <>
                     <Text style={s.muted}>Enter the pickup OTP from the shipper to start the trip.</Text>
-                    <Field label="Pickup OTP" keyboardType="number-pad" maxLength={4} value={otp} onChangeText={setOtp} testID="pickup-otp-input" />
+                    <Field label="Pickup OTP" keyboardType="number-pad" maxLength={6} value={otp} onChangeText={setOtp} testID="pickup-otp-input" />
                     <AppButton title="Verify pickup" icon="check" onPress={() => verify("pickup")} loading={busy} testID="verify-pickup-button" />
                   </>
                 ) : (
                   <>
                     <Text style={s.muted}>Enter the delivery OTP from the shipper to complete the trip.</Text>
-                    <Field label="Delivery OTP" keyboardType="number-pad" maxLength={4} value={otp} onChangeText={setOtp} testID="delivery-otp-input" />
+                    <Field label="Delivery OTP" keyboardType="number-pad" maxLength={6} value={otp} onChangeText={setOtp} testID="delivery-otp-input" />
                     <AppButton title="Verify delivery" icon="check-all" onPress={() => verify("delivery")} loading={busy} testID="verify-delivery-button" />
                   </>
                 )}

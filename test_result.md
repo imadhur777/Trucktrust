@@ -101,3 +101,43 @@
 #====================================================================================================
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
+user_problem_statement: "TruckTrust freight marketplace (Shipper/Driver/Admin). Verify security-audit fixes did not regress core flows."
+backend:
+  - task: "Security fixes: object-level auth on offers/messages/disputes/bookings, 6-digit OTP with max attempts, OTP masking"
+    implemented: true
+    working: "NA"
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Applied IDOR fixes, 6-digit OTP, MAX_OTP_ATTEMPTS, _mask_otps for driver. Needs full regression."
+frontend:
+  - task: "Booking screen 6-digit OTP input + full shipper/driver flows"
+    implemented: true
+    working: "NA"
+    file: "/app/frontend/app/booking/[id].tsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "OTP input updated to 6 chars. Needs e2e verification."
+metadata:
+  created_by: "main_agent"
+  version: "1.0"
+  test_sequence: 1
+  run_ui: true
+test_plan:
+  current_focus:
+    - "Security fixes regression"
+    - "Booking screen 6-digit OTP"
+  stuck_tasks: []
+  test_all: true
+  test_priority: "high_first"
+agent_communication:
+  - agent: "main"
+    message: "Verify end-to-end: register/login, shipper posts load, driver offers, shipper accepts -> booking, mock pay, driver enters pickup/delivery OTP (6-digit), ratings, admin stats. Also verify IDOR blocked (other users cannot read offers/messages/bookings not theirs) and OTP attempts limit."

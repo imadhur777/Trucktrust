@@ -1,6 +1,7 @@
 import React from "react";
 import {
   ActivityIndicator,
+  Platform,
   Pressable,
   PressableProps,
   Text,
@@ -118,18 +119,45 @@ export function Field({
   label,
   error,
   containerStyle,
+  leftIcon,
+  right,
   ...props
-}: TextInputProps & { label?: string; error?: string; containerStyle?: StyleProp<ViewStyle> }) {
+}: TextInputProps & {
+  label?: string;
+  error?: string;
+  containerStyle?: StyleProp<ViewStyle>;
+  leftIcon?: IconName;
+  right?: React.ReactNode;
+}) {
   const s = useFieldStyles();
   const { colors } = useTheme();
+  const [focused, setFocused] = React.useState(false);
   return (
     <View style={[{ gap: spacing.xs }, containerStyle]}>
       {label ? <Text style={s.label}>{label}</Text> : null}
-      <TextInput
-        placeholderTextColor={colors.muted}
-        style={[s.input, error ? { borderColor: colors.error } : null]}
-        {...props}
-      />
+      <View
+        style={[
+          s.inputWrap,
+          focused ? { borderColor: colors.brandPrimary, backgroundColor: colors.surface } : null,
+          error ? { borderColor: colors.error } : null,
+        ]}
+      >
+        {leftIcon ? <Icon name={leftIcon} size={20} color={focused ? colors.brandPrimary : colors.muted} /> : null}
+        <TextInput
+          placeholderTextColor={colors.muted}
+          style={s.input}
+          onFocus={(e) => {
+            setFocused(true);
+            props.onFocus?.(e);
+          }}
+          onBlur={(e) => {
+            setFocused(false);
+            props.onBlur?.(e);
+          }}
+          {...props}
+        />
+        {right}
+      </View>
       {error ? <Text style={s.error}>{error}</Text> : null}
     </View>
   );
@@ -137,16 +165,24 @@ export function Field({
 
 const useFieldStyles = makeStyles((c) => ({
   label: { fontSize: fontSize.base, fontWeight: "600", color: c.onSurfaceSecondary },
-  input: {
-    backgroundColor: c.surfaceTertiary,
+  inputWrap: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
+    backgroundColor: c.surfaceSecondary,
     borderRadius: radius.md,
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: c.border,
     paddingHorizontal: spacing.md,
+    minHeight: 52,
+  },
+  input: {
+    flex: 1,
     paddingVertical: spacing.md,
     fontSize: fontSize.lg,
     color: c.onSurface,
     minHeight: 50,
+    ...Platform.select({ web: { outlineWidth: 0 } as any }),
   },
   error: { fontSize: fontSize.sm, color: c.error },
 }));

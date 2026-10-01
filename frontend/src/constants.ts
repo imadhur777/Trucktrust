@@ -21,7 +21,7 @@ export const MATERIALS = [
 ];
 
 export const HERO_IMAGE =
-  "https://images.unsplash.com/photo-1655478157959-3fcfc543c1a2?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA4Mzl8MHwxfHNlYXJjaHwxfHx0cnVjayUyMG9uJTIwaGlnaHdheSUyMHN1bnNldHxlbnwwfHx8fDE3OTA4NDcyMTR8MA&ixlib=rb-4.1.0&q=85";
+  "https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?crop=entropy&cs=srgb&fm=jpg&w=1200&q=80";
 
 export const SHIPPER_EMPTY_IMAGE =
   "https://images.unsplash.com/photo-1587293852726-70cdb56c2866?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NDk1Nzd8MHwxfHNlYXJjaHwxfHx3YXJlaG91c2UlMjBsb2dpc3RpY3MlMjBzdXBwbHklMjBjaGFpbnxlbnwwfHx8fDE3OTA4NDcyMTR8MA&ixlib=rb-4.1.0&q=85";

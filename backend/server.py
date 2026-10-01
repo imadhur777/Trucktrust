@@ -52,7 +52,10 @@ def new_id() -> str:
 
 
 def gen_otp() -> str:
-    return f"{random.randint(1000, 9999)}"
+    return f"{random.randint(100000, 999999)}"
+
+
+MAX_OTP_ATTEMPTS = 5
 
 
 def hash_pw(pw: str) -> str:
@@ -329,7 +332,18 @@ async def make_offer(load_id: str, body: OfferIn, user: dict = Depends(require_r
 
 @api.get("/loads/{load_id}/offers")
 async def list_offers(load_id: str, user: dict = Depends(get_current_user)):
-    offers = await db.offers.find({"load_id": load_id}, {"_id": 0}).sort("created_at", -1).to_list(200)
+    load = await db.loads.find_one({"id": load_id})
+    if not load:
+        raise HTTPException(404, "Load not found")
+    if user["role"] == "admin" or user["id"] == load["shipper_id"]:
+        offers = await db.offers.find({"load_id": load_id}, {"_id": 0}).sort("created_at", -1).to_list(200)
+    elif user["role"] == "driver":
+        # A driver may only see their own offer on a load.
+        offers = await db.offers.find(
+            {"load_id": load_id, "driver_id": user["id"]}, {"_id": 0}
+        ).sort("created_at", -1).to_list(200)
+    else:
+        raise HTTPException(403, "Not allowed")
     return offers
 
 
@@ -339,6 +353,11 @@ async def counter_offer(offer_id: str, body: CounterIn, user: dict = Depends(get
     if not offer:
         raise HTTPException(404, "Offer not found")
     load = await db.loads.find_one({"id": offer["load_id"]})
+    if not load:
+        raise HTTPException(404, "Load not found")
+    # Only the load's shipper or the offer's own driver can negotiate.
+    if user["id"] not in (load["shipper_id"], offer["driver_id"]):
+        raise HTTPException(403, "Not a party to this offer")
     role = "shipper" if user["id"] == load["shipper_id"] else "driver"
     await db.offers.update_one(
         {"id": offer_id},
@@ -358,6 +377,9 @@ async def reject_offer(offer_id: str, user: dict = Depends(require_role("shipper
     offer = await db.offers.find_one({"id": offer_id})
     if not offer:
         raise HTTPException(404, "Offer not found")
+    load = await db.loads.find_one({"id": offer["load_id"]})
+    if not load or load["shipper_id"] != user["id"]:
+        raise HTTPException(403, "Not your load")
     await db.offers.update_one({"id": offer_id}, {"$set": {"status": "rejected"}})
     return {"ok": True}
 
@@ -416,22 +438,39 @@ async def accept_offer(offer_id: str, user: dict = Depends(require_role("shipper
 # ---------------------------------------------------------------------------
 # Negotiation messages
 # ---------------------------------------------------------------------------
+async def _authorized_thread(load_id: str, with_user: Optional[str], user: dict) -> tuple:
+    load = await db.loads.find_one({"id": load_id})
+    if not load:
+        raise HTTPException(404, "Load not found")
+    if user["role"] == "admin":
+        return load, (with_user or load["shipper_id"])
+    if user["id"] == load["shipper_id"]:
+        # Shipper must point at a driver who actually has an offer on this load.
+        if not with_user:
+            raise HTTPException(400, "with_user required")
+        has_offer = await db.offers.find_one({"load_id": load_id, "driver_id": with_user})
+        if not has_offer:
+            raise HTTPException(403, "No such negotiation")
+        return load, with_user
+    if user["role"] == "driver":
+        # A driver may only ever access their own thread.
+        return load, user["id"]
+    raise HTTPException(403, "Not a party to this load")
+
+
 @api.get("/loads/{load_id}/messages")
 async def get_messages(load_id: str, with_user: Optional[str] = None, user: dict = Depends(get_current_user)):
-    q: dict = {"load_id": load_id}
-    if with_user:
-        q["thread_with"] = with_user
-    msgs = await db.messages.find(q, {"_id": 0}).sort("created_at", 1).to_list(500)
+    _, thread = await _authorized_thread(load_id, with_user, user)
+    msgs = await db.messages.find(
+        {"load_id": load_id, "thread_with": thread}, {"_id": 0}
+    ).sort("created_at", 1).to_list(500)
     return msgs
 
 
 @api.post("/loads/{load_id}/messages")
 async def post_message(load_id: str, body: MessageIn, with_user: Optional[str] = None,
                        user: dict = Depends(get_current_user)):
-    load = await db.loads.find_one({"id": load_id})
-    if not load:
-        raise HTTPException(404, "Load not found")
-    thread_with = with_user if with_user else user["id"]
+    _, thread_with = await _authorized_thread(load_id, with_user, user)
     doc = {
         "id": new_id(), "load_id": load_id, "thread_with": thread_with,
         "sender_id": user["id"], "sender_role": user["role"], "type": "text",
@@ -490,7 +529,10 @@ async def verify_pickup(booking_id: str, body: OtpIn, user: dict = Depends(requi
     b = await db.bookings.find_one({"id": booking_id})
     if not b or b["driver_id"] != user["id"]:
         raise HTTPException(404, "Booking not found")
+    if b.get("pickup_attempts", 0) >= MAX_OTP_ATTEMPTS:
+        raise HTTPException(429, "Too many incorrect attempts. Contact support.")
     if body.otp != b["pickup_otp"]:
+        await db.bookings.update_one({"id": booking_id}, {"$inc": {"pickup_attempts": 1}})
         raise HTTPException(400, "Incorrect pickup OTP")
     await db.bookings.update_one(
         {"id": booking_id},
@@ -509,7 +551,10 @@ async def verify_delivery(booking_id: str, body: OtpIn, user: dict = Depends(req
         raise HTTPException(404, "Booking not found")
     if not b.get("pickup_verified"):
         raise HTTPException(400, "Verify pickup first")
+    if b.get("delivery_attempts", 0) >= MAX_OTP_ATTEMPTS:
+        raise HTTPException(429, "Too many incorrect attempts. Contact support.")
     if body.otp != b["delivery_otp"]:
+        await db.bookings.update_one({"id": booking_id}, {"$inc": {"delivery_attempts": 1}})
         raise HTTPException(400, "Incorrect delivery OTP")
     await db.bookings.update_one(
         {"id": booking_id},
@@ -557,6 +602,8 @@ async def create_dispute(body: DisputeIn, user: dict = Depends(get_current_user)
     b = await db.bookings.find_one({"id": body.booking_id})
     if not b:
         raise HTTPException(404, "Booking not found")
+    if user["id"] not in (b["shipper_id"], b["driver_id"]) and user["role"] != "admin":
+        raise HTTPException(403, "Not a party to this booking")
     doc = {
         "id": new_id(), "booking_id": body.booking_id, "booking_ref": b.get("booking_ref", ""),
         "raised_by": user["id"], "raised_by_name": user.get("name", ""),

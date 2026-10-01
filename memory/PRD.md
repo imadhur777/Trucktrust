@@ -33,6 +33,7 @@ owners who have capacity on their return journeys. Must run on iOS, Android, and
 - Ratings after completion (2-way), raise dispute
 - Admin dashboard (web + mobile): stats grid + GMV, users (verify), loads, bookings, disputes (resolve)
 - Verified end-to-end (25/25 backend tests pass; frontend flows verified)
+- Login screen redesign: brand-gradient hero with new truck photo, floating form card, icon inputs with show/hide password, trust badges (2026-06)
 
 ## Backlog (prioritized)
 ### P0
