@@ -21,6 +21,7 @@ export interface SignUpPayload {
   company?: string;
   truck_type?: string;
   capacity?: string;
+  accepted_terms: boolean;
 }
 
 const AuthContext = createContext<AuthState | undefined>(undefined);

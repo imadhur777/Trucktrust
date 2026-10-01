@@ -141,3 +141,28 @@ test_plan:
 agent_communication:
   - agent: "main"
     message: "Verify end-to-end: register/login, shipper posts load, driver offers, shipper accepts -> booking, mock pay, driver enters pickup/delivery OTP (6-digit), ratings, admin stats. Also verify IDOR blocked (other users cannot read offers/messages/bookings not theirs) and OTP attempts limit."
+  - task: "Forgot password: /api/auth/forgot-password, /api/auth/verify-reset-code, /api/auth/reset-password (email via Emergent Resend)"
+    implemented: true
+    working: "NA"
+    file: "/app/backend/server.py, /app/backend/email_service.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Code hashed in db.password_resets (bcrypt). Rate limit 3 sends/hour, 5 attempts. Register now requires accepted_terms=true."
+  - task: "Frontend: onboarding walkthrough, forgot-password screen, terms screen, register redesign with T&C checkbox, login forgot link"
+    implemented: true
+    working: "NA"
+    file: "/app/frontend/app/onboarding.tsx, /app/frontend/app/(auth)/*.tsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Onboarding shows once (AsyncStorage key tt_onboarding_done) when logged out."
+agent_communication:
+  - agent: "main"
+    message: "Round 2: test security fixes regression + new auth features. For reset-code testing, the email can't be read; patch db.password_resets latest doc code_hash with bcrypt of a known code (see instructions)."

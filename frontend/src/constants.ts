@@ -20,6 +20,8 @@ export const MATERIALS = [
   "Electronics",
 ];
 
+export const ONBOARDING_KEY = "tt_onboarding_done";
+
 export const HERO_IMAGE =
   "https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?crop=entropy&cs=srgb&fm=jpg&w=1200&q=80";
 

@@ -116,13 +116,22 @@ export default function Login() {
             />
           </View>
 
+          <Pressable
+            onPress={() => router.push("/(auth)/forgot-password")}
+            style={s.forgotRow}
+            hitSlop={8}
+            testID="forgot-password-link"
+          >
+            <Text style={s.switchLink}>Forgot password?</Text>
+          </Pressable>
+
           <AppButton
             title="Sign in"
             icon="arrow-right"
             onPress={onLogin}
             loading={loading}
             testID="login-submit-button"
-            style={{ marginTop: spacing.lg }}
+            style={{ marginTop: spacing.md }}
           />
 
           <Pressable
@@ -191,6 +200,7 @@ const useStyles = makeStyles((c) => ({
   title: { fontSize: fontSize["2xl"], fontWeight: "800", color: c.onSurface },
   subtitle: { fontSize: fontSize.base, color: c.muted, marginTop: 4 },
   fields: { gap: spacing.lg, marginTop: spacing.xl },
+  forgotRow: { alignSelf: "flex-end", marginTop: spacing.sm, minHeight: 32, justifyContent: "center" },
   switchRow: { flexDirection: "row", justifyContent: "center", marginTop: spacing.lg, minHeight: 44, alignItems: "center" },
   switchMuted: { color: c.muted, fontSize: fontSize.base },
   switchLink: { color: c.brandPrimary, fontSize: fontSize.base, fontWeight: "700" },

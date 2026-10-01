@@ -31,6 +31,8 @@ ADMIN_EMAIL = os.environ["ADMIN_EMAIL"]
 ADMIN_PASSWORD = os.environ["ADMIN_PASSWORD"]
 PLATFORM_FEE_PCT = 0.08  # 8% commission
 
+from email_service import send_email, password_reset_html, EMAIL_FROM_NAME  # noqa: E402
+
 app = FastAPI(title="TruckTrust API")
 api = APIRouter(prefix="/api")
 
@@ -132,6 +134,7 @@ class RegisterIn(BaseModel):
     company: str = ""
     truck_type: str = ""
     capacity: str = ""
+    accepted_terms: bool = False
 
 
 class LoginIn(BaseModel):
@@ -194,6 +197,8 @@ class DisputeIn(BaseModel):
 @api.post("/auth/register")
 async def register(body: RegisterIn):
     email = body.email.lower()
+    if not body.accepted_terms:
+        raise HTTPException(400, "You must accept the Terms & Conditions")
     if await db.users.find_one({"email": email}):
         raise HTTPException(409, "Email already registered")
     doc = {
@@ -206,6 +211,7 @@ async def register(body: RegisterIn):
         "company": body.company,
         "truck_type": body.truck_type,
         "capacity": body.capacity,
+        "accepted_terms_at": now_iso(),
         "verified": False,
         "kyc_status": "pending",
         "rating_avg": 0,
@@ -230,6 +236,107 @@ async def login(body: LoginIn):
 @api.get("/auth/me")
 async def me(user: dict = Depends(get_current_user)):
     return public_user(user)
+
+
+# ---- Password reset (email + 6-digit code) ----
+RESET_CODE_MINUTES = 10
+RESET_MAX_ATTEMPTS = 5
+RESET_MAX_SENDS_PER_HOUR = 3
+
+
+class ForgotIn(BaseModel):
+    email: EmailStr
+
+
+class VerifyResetIn(BaseModel):
+    email: EmailStr
+    code: str = Field(min_length=6, max_length=6)
+
+
+class ResetPasswordIn(BaseModel):
+    reset_token: str
+    new_password: str = Field(min_length=6, max_length=128)
+
+
+@api.post("/auth/forgot-password")
+async def forgot_password(body: ForgotIn):
+    email = body.email.lower()
+    generic = {"ok": True, "message": "If an account exists for this email, a reset code has been sent."}
+    u = await db.users.find_one({"email": email}, {"_id": 0})
+    if not u or u.get("disabled"):
+        return generic
+    hour_ago = (datetime.now(timezone.utc) - timedelta(hours=1)).isoformat()
+    sends = await db.password_resets.count_documents({"email": email, "created_at": {"$gte": hour_ago}})
+    if sends >= RESET_MAX_SENDS_PER_HOUR:
+        raise HTTPException(429, "Too many reset requests. Please try again later.")
+    code = gen_otp()
+    await db.password_resets.update_many({"email": email, "used": False}, {"$set": {"used": True}})
+    await db.password_resets.insert_one({
+        "id": new_id(),
+        "email": email,
+        "code_hash": hash_pw(code),
+        "attempts": 0,
+        "used": False,
+        "created_at": now_iso(),
+        "expires_at": (datetime.now(timezone.utc) + timedelta(minutes=RESET_CODE_MINUTES)).isoformat(),
+    })
+    await send_email(
+        to=email,
+        subject=f"Your {EMAIL_FROM_NAME} password reset code",
+        html=password_reset_html(u.get("name", ""), code, RESET_CODE_MINUTES),
+    )
+    return generic
+
+
+async def _active_reset(email: str) -> dict:
+    r = await db.password_resets.find_one(
+        {"email": email, "used": False}, sort=[("created_at", -1)]
+    )
+    if not r or r["expires_at"] < now_iso():
+        raise HTTPException(400, "Reset code expired. Please request a new one.")
+    if r["attempts"] >= RESET_MAX_ATTEMPTS:
+        raise HTTPException(429, "Too many incorrect attempts. Please request a new code.")
+    return r
+
+
+@api.post("/auth/verify-reset-code")
+async def verify_reset_code(body: VerifyResetIn):
+    email = body.email.lower()
+    r = await _active_reset(email)
+    if not verify_pw(body.code, r["code_hash"]):
+        await db.password_resets.update_one({"_id": r["_id"]}, {"$inc": {"attempts": 1}})
+        raise HTTPException(400, "Incorrect code")
+    token = jwt.encode(
+        {
+            "sub": email,
+            "purpose": "password_reset",
+            "rid": r["id"],
+            "exp": datetime.now(timezone.utc) + timedelta(minutes=RESET_CODE_MINUTES),
+        },
+        JWT_SECRET,
+        algorithm=JWT_ALG,
+    )
+    return {"reset_token": token}
+
+
+@api.post("/auth/reset-password")
+async def reset_password(body: ResetPasswordIn):
+    try:
+        claims = jwt.decode(body.reset_token, JWT_SECRET, algorithms=[JWT_ALG])
+        if claims.get("purpose") != "password_reset":
+            raise ValueError("wrong purpose")
+    except Exception:
+        raise HTTPException(400, "Reset session expired. Please start again.")
+    r = await db.password_resets.find_one({"id": claims["rid"], "used": False})
+    if not r:
+        raise HTTPException(400, "Reset session expired. Please start again.")
+    u = await db.users.find_one({"email": claims["sub"]}, {"_id": 0})
+    if not u:
+        raise HTTPException(400, "Account not found")
+    await db.users.update_one({"id": u["id"]}, {"$set": {"password_hash": hash_pw(body.new_password)}})
+    await db.password_resets.update_one({"id": r["id"]}, {"$set": {"used": True}})
+    token = make_token(u["id"])
+    return {"access_token": token, "user": public_user(u)}
 
 
 @api.put("/auth/me")

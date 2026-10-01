@@ -145,7 +145,8 @@ export function Field({
         {leftIcon ? <Icon name={leftIcon} size={20} color={focused ? colors.brandPrimary : colors.muted} /> : null}
         <TextInput
           placeholderTextColor={colors.muted}
-          style={s.input}
+          {...props}
+          style={[s.input, props.style]}
           onFocus={(e) => {
             setFocused(true);
             props.onFocus?.(e);
@@ -154,7 +155,6 @@ export function Field({
             setFocused(false);
             props.onBlur?.(e);
           }}
-          {...props}
         />
         {right}
       </View>
